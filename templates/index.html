@@ -1,0 +1,320 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Image Sorter</title>
+    <!-- Link to your external CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body class="body-main">
+
+{% if data and data['image_folder'] %}
+    <!-- If a folder is set, show the main interface -->
+    <div class="container" id="container">
+        <!-- Left panel: show the current image -->
+        <div class="left-panel" id="left-panel">
+            {% if data['image_list'] %}
+                <!-- The clickable filename overlay -->
+                <div class="filename-overlay" id="filename-overlay">
+                    {{ file_name }}
+                </div>
+
+                <img class="current-image" id="current-image" 
+                     src="{{ url_for('show_current_image') }}" 
+                     alt="Current Image" />
+            {% else %}
+                <p>No images found in {{ data['image_folder'] }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Right panel: move buttons, add button form, etc. -->
+        <div class="right-panel" id="right-panel">
+            <h4>Sorting Images for</h4> 
+
+            <p>
+                <span id="folder-display" class="folder-display">
+                    {{ data['image_folder'] }}
+                </span>
+            </p>
+
+            <p>Image {{ data['current_index'] + 1 }} of {{ data['total_images'] }}</p>
+
+            <!-- Existing move-to buttons -->
+            {% for btn in move_buttons %}
+                <div class="button-row">
+                    <!-- Move Image Button -->
+                    <form method="POST" action="{{ url_for('move_image') }}" class="button-form-inline">
+                        <input type="hidden" name="target_path" value="{{ btn['path'] }}">
+                        <button class="btn-move" type="submit" title="{{ btn['path'] }}">
+                            {{ btn['label'] }}
+                        </button>
+                    </form>
+                    
+                    <!-- Remove Button -->
+                    <form method="POST" action="{{ url_for('remove_button') }}" class="button-form-inline">
+                        <input type="hidden" name="remove_path" value="{{ btn['path'] }}">
+                        <button type="submit" class="btn-remove">
+                            X
+                        </button>
+                    </form>
+                </div>
+            {% endfor %}
+            <hr>
+
+            <!-- Form to add a new button -->
+            <h5>Add New Move-to Button</h5>
+            <form method="POST" action="{{ url_for('add_button') }}">
+                <label>Label:</label>
+                <input class="input-field" type="text" name="btn_label" required />
+                <label>Destination Path:</label>
+                <input class="input-field" type="text" name="btn_path" required />
+                <button type="submit" class="btn-add">Add Button</button>
+            </form>
+        </div>
+    </div>
+
+{% else %}
+    <!-- If no folder is set, show a form to pick one -->
+    <div class="set-dir-form" id="set-dir-form">
+        <h2>Select Image Directory</h2>
+        <form method="POST" action="{{ url_for('set_directory') }}">
+            <label for="folder">Folder Path:</label><br>
+            <input class="input-field" type="text" 
+                   id="folder" 
+                   name="folder" 
+                   value="{{ last_folder|default('') }}" 
+                   placeholder="e.g. C:\images" 
+                   required>
+            <br>
+            <button type="submit" class="btn-add">Load Images</button>
+        </form>
+    </div>
+{% endif %}
+
+{% if data and data['image_list'] %}
+<script>
+// ========================
+// Navigation
+// ========================
+function goNext() {
+    window.location.href = "{{ url_for('navigate', direction='next') }}";
+}
+function goPrev() {
+    window.location.href = "{{ url_for('navigate', direction='prev') }}";
+}
+
+// ========================
+// Keyboard Navigation
+// ========================
+document.addEventListener('keydown', function(e) {
+    // If focus is on an input/textarea, skip navigation
+    const activeTag = document.activeElement.tagName.toLowerCase();
+    if (activeTag === 'input' || activeTag === 'textarea') {
+        return;
+    }
+    if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight') {
+        e.preventDefault();
+        goNext();
+    } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        goPrev();
+    }
+});
+
+// ========================
+// Image Click => Next
+// ========================
+let currentImage = document.getElementById('current-image');
+currentImage.addEventListener('click', function() {
+    goNext();
+});
+
+// ========================
+// Ctrl+Scroll => Zoom, else => Next/Prev
+// ONLY in Left Panel
+// ========================
+let zoomScale = 1.0;
+const leftPanel = document.getElementById('left-panel');
+
+leftPanel.addEventListener('wheel', function(e) {
+    // If user is pressing Ctrl, do custom zoom
+    // If user is not pressing Ctrl, go next/prev
+    if (!e.ctrlKey) {
+        e.preventDefault(); // prevent browser's normal scroll
+        if (e.deltaY < 0) {
+            goPrev();
+        } else {
+            goNext();
+        }
+        return;
+    }
+
+    // Ctrl + scroll => Zoom around cursor
+    e.preventDefault();
+
+    // We'll still zoom the image itself
+    const rect = currentImage.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+
+    // Convert to percentage for transform-origin
+    const originX = (offsetX / rect.width) * 100;
+    const originY = (offsetY / rect.height) * 100;
+    currentImage.style.transformOrigin = `${originX}% ${originY}%`;
+
+    // Zoom in/out
+    if (e.deltaY < 0) {
+        zoomScale += 0.1;
+    } else {
+        zoomScale -= 0.1;
+        if (zoomScale < 0.1) zoomScale = 0.1;
+    }
+    currentImage.style.transform = `scale(${zoomScale})`;
+});
+
+// ========================
+// Rename File on Click
+// ========================
+const filenameOverlay = document.getElementById('filename-overlay');
+if (filenameOverlay) {
+    filenameOverlay.addEventListener('click', function() {
+        const oldName = filenameOverlay.textContent.trim();
+
+        // Derive base name (no extension)
+        const dotIndex = oldName.lastIndexOf('.');
+        let baseName = oldName;
+        if (dotIndex > 0) {
+            baseName = oldName.substring(0, dotIndex);
+        }
+
+        // Create input in place
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = baseName;
+        input.classList.add('rename-input');
+
+        // Replace text with input
+        filenameOverlay.textContent = '';
+        filenameOverlay.appendChild(input);
+
+        // Focus (no auto-select, so user can place cursor)
+        input.focus();
+
+        // ENTER => rename
+        input.addEventListener('keydown', function(ev) {
+            if (ev.key === 'Enter') {
+                ev.preventDefault();
+                const newBase = input.value.trim();
+                if (!newBase) {
+                    // If empty, revert
+                    filenameOverlay.textContent = oldName;
+                    return;
+                }
+                // POST JSON to /rename_image
+                fetch("{{ url_for('rename_image') }}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        old_name: oldName,
+                        new_base: newBase
+                    })
+                })
+                .then(res => {
+                    if (!res.ok) {
+                        return res.text().then(text => {
+                            throw new Error(text);
+                        });
+                    }
+                    // On success, reload
+                    window.location.reload();
+                })
+                .catch(err => {
+                    alert("Rename failed: " + err.message);
+                    filenameOverlay.textContent = oldName;
+                });
+            }
+        });
+
+        // BLUR => revert if user clicks away
+        input.addEventListener('blur', function() {
+            filenameOverlay.textContent = oldName;
+        });
+    });
+}
+
+// ========================
+// Change Folder on Click
+// (Primarily to edit the current path)
+// ========================
+const folderDisplay = document.getElementById('folder-display');
+if (folderDisplay) {
+    folderDisplay.addEventListener('click', function (e) {
+    // If there's already an input showing, do nothing
+    if (folderDisplay.querySelector('input')) {
+        return;  // We already replaced the text with an input
+    }
+    
+    // Otherwise proceed as before...
+    const oldFolder = folderDisplay.textContent.trim();
+
+        // Create input with the old path (so user can edit in place)
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = oldFolder;
+        input.classList.add('rename-input');
+        console.log("oldFolder:", JSON.stringify(oldFolder));
+
+        // Replace the text with the input
+        folderDisplay.textContent = '';
+        folderDisplay.appendChild(input);
+
+        // Focus only (no select, so the user can easily edit)
+        input.focus();
+
+        // Press ENTER => change folder
+        input.addEventListener('keydown', function(ev) {
+            if (ev.key === 'Enter') {
+                ev.preventDefault();
+                const newFolder = input.value.trim();
+                if (!newFolder) {
+                    folderDisplay.textContent = oldFolder;
+                    return;
+                }
+
+                // POST JSON to /change_folder
+                fetch("{{ url_for('change_folder') }}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ folder: newFolder })
+                })
+                .then(res => {
+                    if (!res.ok) {
+                        return res.json().then(obj => {
+                            throw new Error(obj.error || res.statusText);
+                        });
+                    }
+                    return res.json();
+                })
+                .then(() => {
+                    // On success, reload to show new folder
+                    window.location.reload();
+                })
+                .catch(err => {
+                    alert("Could not change folder: " + err.message);
+                    folderDisplay.textContent = oldFolder;
+                });
+            }
+        });
+
+        // If user clicks away => revert visually
+        input.addEventListener('blur', function() {
+            folderDisplay.textContent = oldFolder;
+            console.log("oldFolder:", JSON.stringify(oldFolder));
+        });
+    });
+}
+</script>
+{% endif %}
+</body>
+</html>
