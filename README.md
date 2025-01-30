@@ -30,3 +30,6 @@ Ensure you have **Python 3.10+** installed, then install the required libraries:
 
 ```sh
 pip install -r requirements.txt
+```
+## Screenshot
+![alt text](screenshot-1.png)
