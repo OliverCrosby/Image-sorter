@@ -2,60 +2,62 @@
 import sys
 import threading
 import webbrowser
+import os
 
 import pystray
 from pystray import MenuItem as item
-from PIL import Image, ImageDraw
+from PIL import Image
 
 from image_sorter import app  # Import the Flask app
 
+ICON_PATH = "icon.ico"  # Path to your custom icon
+
 def run_server():
-    # Run your Flask server on port 5000, no debug.
-    # This call BLOCKS, so we use a background thread.
+    """Run the Flask server in a background thread."""
     app.run(host='127.0.0.1', port=5000, debug=False)
 
-def create_image():
-    """Generate a simple tray icon (64x64) via Pillow."""
-    icon_size = 64
-    image = Image.new('RGB', (icon_size, icon_size), 'white')
-    draw = ImageDraw.Draw(image)
-    draw.rectangle([(0, 0), (icon_size, icon_size)], fill='white')
-    draw.text((10, 20), "Img", fill='black')
-    return image
+def load_icon():
+    """Load the tray icon from the ICO file."""
+    if os.path.exists(ICON_PATH):
+        return Image.open(ICON_PATH)
+    else:
+        print(f"Warning: {ICON_PATH} not found! Using default tray icon.")
+        return None  # Falls back to default if icon is missing
 
 def on_clicked(icon, menu_item):
     """Handle menu item clicks from the tray icon."""
     if str(menu_item) == "Open Browser":
-        # Open the local server in the browser
         webbrowser.open("http://127.0.0.1:5000")
     elif str(menu_item) == "Exit":
-        # Stop the tray icon event loop
         icon.stop()
-        # Exit the entire process (kills Flask too, because it’s in a daemon thread)
         sys.exit(0)
 
 def start_tray_icon():
-    # Build a right-click menu with "Open Browser" and "Exit"
+    """Create and run the system tray icon."""
     menu = (
         item("Open Browser", on_clicked),
         item("Exit", on_clicked),
     )
+    
+    # Load the custom icon or fallback
+    tray_icon = load_icon()
+
     # Create the tray icon
     icon = pystray.Icon(
         name="Image Sorter",
-        icon=create_image(),
+        icon=tray_icon,
         title="Image Sorter Running",
         menu=menu
     )
+
     icon.run()
 
 def main():
-    # 1) Start Flask in a background thread.
+    """Start Flask server in the background and tray icon in the foreground."""
     server_thread = threading.Thread(target=run_server, daemon=True)
     server_thread.start()
 
-    # 2) Start the tray icon in the foreground (blocking).
-    start_tray_icon()
+    start_tray_icon()  # Runs in foreground
 
 if __name__ == "__main__":
     main()
