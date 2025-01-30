@@ -149,3 +149,6 @@
     padding: 2px 4px;
   }
   
+  .folder-display:hover {
+    cursor:pointer;
+  }
