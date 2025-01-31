@@ -1,6 +1,9 @@
 # 🖼️ Image Sorter
 
-A **Flask-based** tool for sorting images into folders, with a **tray icon launcher** for easy access on Windows. Users can navigate through images in a folder, move them to predefined locations, rename them, and even edit the folder path inline. 
+A **Flask-based** tool for sorting images into folders, with a **tray icon launcher** for easy access on Windows. Users can navigate through the images in the a set folder and create buttons that move the current image to different folders, so sorting is just one click.
+
+## Screenshot
+![alt text](screenshot-1.png)
 
 ---
 
@@ -27,5 +30,4 @@ Ensure you have **Python 3.10+** installed, then install the required libraries:
 pip install -r requirements.txt
 ```
 Run using `Image Sorter.bat`, or if you just want the flask server without the Windows system tray icon, run with `python image_sorter.py`
-## Screenshot
-![alt text](screenshot-1.png)
+
