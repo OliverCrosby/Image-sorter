@@ -26,10 +26,6 @@ Ensure you have **Python 3.10+** installed, then install the required libraries:
 ```sh
 pip install -r requirements.txt
 ```
+Run using `Image Sorter.bat`, or if you just want the flask server without the Windows system tray icon, run with `python image_sorter.py`
 ## Screenshot
 ![alt text](screenshot-1.png)
----
-This project supports two launch methods:
-1. **Running `image_sorter.py` directly** – Starts the Flask web server for sorting images.
-2. **Using `tray_launcher.py`** – Runs the Flask server in the background with a **Windows system tray icon**.
-3. **Using `Image Sorter.bat`** – Launches the `tray_launcher.py` script for convenience.
