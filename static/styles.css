@@ -24,14 +24,22 @@
 .left-panel {
   flex: 1 1;
   background-color: #000;
-  /* Remove the centering so the image is at the top left */
-  /* display: flex;
-       align-items: center;
-       justify-content: center; */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
   position: relative;
 }
 
+.current-image {
+  max-width: none;
+  max-height: none;
+  transform-origin: top left;
+  cursor: default;
+  transition: opacity 0.2s ease-in-out;
+  opacity: 1;
+  display: block;
+}
 /* Right panel: fixed width, dark gray background, scroll if needed */
 .right-panel {
   width: 300px;
@@ -144,7 +152,7 @@ p {
 
 /* Example style for the input after clicking */
 .rename-input {
-  width: 150px;
+  width: 100%;
   /* or whatever */
   background-color: #222;
   border: 1px solid #777;
@@ -154,18 +162,6 @@ p {
 
 .folder-display:hover {
   cursor: pointer;
-}
-
-.current-image {
-  /* Remove the max-* rules if you want the image’s natural size for pan/zoom, or adjust as needed */
-  max-width: none;
-  max-height: none;
-  transform-origin: top left;
-  cursor: default;
-  transition: opacity 0.2s ease-in-out;
-  opacity: 1;
-  display: block;
-  /* ensures it doesn’t have extra whitespace issues */
 }
 
 #folder-display {
