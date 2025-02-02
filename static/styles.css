@@ -157,3 +157,12 @@
     transition: opacity 0.2s ease-in-out;
     opacity: 1;
 }
+
+#folder-display {
+  font-size: 0.8rem;
+}
+
+h4 {
+  font-size: 1rem;
+  font-weight: normal;
+}

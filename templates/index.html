@@ -31,15 +31,13 @@
 
         <!-- Right panel: move buttons, add button form, etc. -->
         <div class="right-panel" id="right-panel">
-            <h4>Sorting Images for</h4> 
+            <h4>Sorting image {{ data['current_index'] + 1 }} of {{ data['total_images'] }}</h4> 
 
             <p>
                 <span id="folder-display" class="folder-display">
                     {{ data['image_folder'] }}
                 </span>
             </p>
-
-            <p>Image {{ data['current_index'] + 1 }} of {{ data['total_images'] }}</p>
 
             <!-- Existing move-to buttons -->
             {% for btn in move_buttons %}
