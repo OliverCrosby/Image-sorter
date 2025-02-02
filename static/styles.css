@@ -2,160 +2,170 @@
 
 /* Body: fill screen, black background by default */
 .body-main {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    background-color: #000;
-    color: #fff;
-    font-family: sans-serif;
-  }
-  
-  /* Main container: flex row, fill viewport */
-  .container {
-    display: flex;
-    flex-direction: row;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden; /* no scroll on the entire page */
-  }
-  
-  /* Left panel: black background, fill remaining space, relative positioning */
-  .left-panel {
-    flex: 1 1;
-    background-color: #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    position: relative; /* for overlay positioning */
-  }
-  
-  /* Right panel: fixed width, dark gray background, scroll if needed */
-  .right-panel {
-    width: 300px;
-    background-color: #333;
-    padding: 16px;
-    box-sizing: border-box;
-    overflow-y: auto;
-  }
-  
-  /* The current image can scale for zoom */
-  .current-image {
-    max-width: 100%;
-    max-height: 100%;
-    transform-origin: center center;
-  }
-  
-  /* Overlay text for the filename in top-right corner */
-  .filename-overlay {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background-color: rgba(0,0,0,0.5);
-    padding: 4px 8px;
-    border-radius: 4px;
-  }
-  
-  /* General headings and spacing */
-  h2, h3, h4, h5, p {
-    margin: 0.5em 0;
-  }
-  
-  /* Input fields */
-  .input-field {
-    width: 100%;
-    margin: 0.25em 0;
-    padding: 0.25em;
-    border: 1px solid #999;
-    background-color: #222;
-    color: #fff;
-  }
-  
-  /* Move button styling */
-  .btn-move {
-    display: inline-block;
-    width: 100%;
-    margin: 4px 0;
-    padding: 8px;
-    background-color: #444;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-    text-align: left;
-  }
-  .btn-move:hover {
-    background-color: #555;
-  }
-  
-  /* The remove (X) button styling */
-  .btn-remove {
-    margin-left: 6px;
-    cursor: pointer;
-    background-color: transparent;
-    color: black;
-    padding: 4px;
-    border: none;
-  }
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: #000;
+  color: #fff;
+  font-family: sans-serif;
+}
 
-  .btn-remove:hover {
-    background: red;
-    color: white;
-  }
-  
-  /* The add button styling, etc. */
-  .btn-add {
-    margin-top: 4px;
-    padding: 8px 12px;
-    cursor: pointer;
-    background-color: #555;
-    color: #fff;
-    border: none;
-  }
-  .btn-add:hover {
-    background-color: #666;
-  }
-  
-  /* Directory form container */
-  #set-dir-form {
-    padding: 16px;
-  }
-  
-  /* Inline forms for the row of buttons */
-  .button-form-inline {
-    display: inline-block;
-  }
-  
-  /* Wrapping div for each row of move + remove button */
-  .button-row {
-    margin-bottom: 1em;
-  }
-  
-  .filename-overlay {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background-color: rgba(0,0,0,0.5);
-    padding: 4px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  /* Example style for the input after clicking */
-  .rename-input {
-    width: 150px; /* or whatever */
-    background-color: #222;
-    border: 1px solid #777;
-    color: #fff;
-    padding: 2px 4px;
-  }
-  
-  .folder-display:hover {
-    cursor:pointer;
-  }
+/* Main container: flex row, fill viewport */
+.container {
+  display: flex;
+  flex-direction: row;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  /* no scroll on the entire page */
+}
 
-  .current-image {
-    transition: opacity 0.2s ease-in-out;
-    opacity: 1;
+/* Left panel: black background, fill remaining space, relative positioning */
+.left-panel {
+  flex: 1 1;
+  background-color: #000;
+  /* Remove the centering so the image is at the top left */
+  /* display: flex;
+       align-items: center;
+       justify-content: center; */
+  overflow: hidden;
+  position: relative;
+}
+
+/* Right panel: fixed width, dark gray background, scroll if needed */
+.right-panel {
+  width: 300px;
+  background-color: #333;
+  padding: 16px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+/* Overlay text for the filename in top-right corner */
+.filename-overlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 4px 8px;
+  border-radius: 4px;
+  z-index: 99;
+}
+
+/* General headings and spacing */
+h2,
+h3,
+h4,
+h5,
+p {
+  margin: 0.5em 0;
+}
+
+/* Input fields */
+.input-field {
+  width: 100%;
+  margin: 0.25em 0;
+  padding: 0.25em;
+  border: 1px solid #999;
+  background-color: #222;
+  color: #fff;
+}
+
+/* Move button styling */
+.btn-move {
+  display: inline-block;
+  width: 100%;
+  margin: 4px 0;
+  padding: 8px;
+  background-color: #444;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.btn-move:hover {
+  background-color: #555;
+}
+
+/* The remove (X) button styling */
+.btn-remove {
+  margin-left: 6px;
+  cursor: pointer;
+  background-color: transparent;
+  color: black;
+  padding: 4px;
+  border: none;
+}
+
+.btn-remove:hover {
+  background: red;
+  color: white;
+}
+
+/* The add button styling, etc. */
+.btn-add {
+  margin-top: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  background-color: #555;
+  color: #fff;
+  border: none;
+}
+
+.btn-add:hover {
+  background-color: #666;
+}
+
+/* Directory form container */
+#set-dir-form {
+  padding: 16px;
+}
+
+/* Inline forms for the row of buttons */
+.button-form-inline {
+  display: inline-block;
+}
+
+/* Wrapping div for each row of move + remove button */
+.button-row {
+  margin-bottom: 1em;
+}
+
+.filename-overlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Example style for the input after clicking */
+.rename-input {
+  width: 150px;
+  /* or whatever */
+  background-color: #222;
+  border: 1px solid #777;
+  color: #fff;
+  padding: 2px 4px;
+}
+
+.folder-display:hover {
+  cursor: pointer;
+}
+
+.current-image {
+  /* Remove the max-* rules if you want the image’s natural size for pan/zoom, or adjust as needed */
+  max-width: none;
+  max-height: none;
+  transform-origin: top left;
+  cursor: default;
+  transition: opacity 0.2s ease-in-out;
+  opacity: 1;
+  display: block;
+  /* ensures it doesn’t have extra whitespace issues */
 }
 
 #folder-display {
