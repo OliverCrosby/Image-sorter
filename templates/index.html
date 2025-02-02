@@ -7,6 +7,8 @@
     <title>Image Sorter</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <!-- for re-ordering the buttons -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <!-- Include interact.js from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <style>
@@ -75,20 +77,22 @@
                     {{ data['image_folder'] }}
                 </span>
             </p>
-            {% for btn in move_buttons %}
-            <div class="button-row">
-                <form method="POST" action="{{ url_for('move_image') }}" class="button-form-inline">
-                    <input type="hidden" name="target_path" value="{{ btn['path'] }}">
-                    <button class="btn-move" type="submit" title="{{ btn['path'] }}">
-                        {{ btn['label'] }}
-                    </button>
-                </form>
-                <form method="POST" action="{{ url_for('remove_button') }}" class="button-form-inline">
-                    <input type="hidden" name="remove_path" value="{{ btn['path'] }}">
-                    <button type="submit" class="btn-remove">X</button>
-                </form>
+            <div id="move-buttons-container">
+                {% for btn in move_buttons %}
+                <div class="button-row" data-index="{{ loop.index0 }}">
+                    <form method="POST" action="{{ url_for('move_image') }}" class="button-form-inline">
+                        <input type="hidden" name="target_path" value="{{ btn['path'] }}">
+                        <button class="btn-move" type="submit" title="{{ btn['path'] }}">
+                            {{ btn['label'] }}
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('remove_button') }}" class="button-form-inline">
+                        <input type="hidden" name="remove_path" value="{{ btn['path'] }}">
+                        <button type="submit" class="btn-remove">X</button>
+                    </form>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
             <hr>
             <h5>Add New Move-to Button</h5>
             <form method="POST" action="{{ url_for('add_button') }}">
@@ -489,6 +493,48 @@
         currentImage.addEventListener('load', function () {
             fitImage();  // Ensure the image fits the container by default
         });
+// ==================================================
+// Drag-and-Drop Sorting for Move-To Buttons (SortableJS)
+// ==================================================
+document.addEventListener("DOMContentLoaded", function () {
+    const moveButtonsContainer = document.getElementById("move-buttons-container");
+
+    const sortable = new Sortable(moveButtonsContainer, {
+        animation: 150,  // Smooth animation
+        ghostClass: "sortable-ghost",  // CSS class for dragging element
+        onEnd: function (evt) {
+            updateButtonOrder();
+        }
+    });
+
+    function updateButtonOrder() {
+        let newOrder = [];
+        document.querySelectorAll("#move-buttons-container .button-row").forEach((row, index) => {
+            const btn = row.querySelector(".btn-move");
+            newOrder.push({
+                label: btn.textContent.trim(),
+                path: btn.title
+            });
+        });
+
+        // Send updated order to Flask backend
+        fetch("{{ url_for('reorder_buttons') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ buttons: newOrder })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status !== "ok") {
+                alert("Failed to save new order");
+            }
+        })
+        .catch(err => console.error("Error updating button order:", err));
+    }
+});
+
+
+
     </script>
     {% endif %}
 </body>

@@ -325,6 +325,22 @@ def rename_image():
 
     return "OK", 200
 
+@app.route('/reorder_buttons', methods=['POST'])
+def reorder_buttons():
+    """Update the order of move-to buttons and save to config."""
+    global CONFIG
+    data = request.get_json()
+    new_buttons = data.get("buttons", [])
+
+    if not isinstance(new_buttons, list):
+        return jsonify({"error": "Invalid button list"}), 400
+
+    CONFIG["buttons"] = new_buttons
+    app.config['MOVE_BUTTONS'] = new_buttons
+    save_config()
+
+    return jsonify({"status": "ok"})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
