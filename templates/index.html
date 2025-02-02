@@ -6,6 +6,7 @@
     <title>Image Sorter</title>
     <!-- Link to your external CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
 <body class="body-main">
 
@@ -95,20 +96,58 @@
 {% if data and data['image_list'] %}
 <script>
 // ========================
-// Navigation
+// AJAX Navigation (without debug logs)
 // ========================
 function goNext() {
-    window.location.href = "{{ url_for('navigate', direction='next') }}";
+    fetch("{{ url_for('ajax_navigate', direction='next') }}")
+        .then(response => response.json())
+        .then(data => {
+            const newImg = new Image();
+            newImg.src = data.image_url + '?_=' + new Date().getTime();
+            newImg.onload = function() {
+                const currentImage = document.getElementById('current-image');
+                currentImage.src = newImg.src;
+                const filenameOverlay = document.getElementById('filename-overlay');
+                if (filenameOverlay) {
+                    filenameOverlay.textContent = data.file_name;
+                }
+            }
+            newImg.onerror = function(err) {
+                // Handle error if needed.
+            }
+        })
+        .catch(err => {
+            // Handle error if needed.
+        });
 }
+
 function goPrev() {
-    window.location.href = "{{ url_for('navigate', direction='prev') }}";
+    fetch("{{ url_for('ajax_navigate', direction='prev') }}")
+        .then(response => response.json())
+        .then(data => {
+            const newImg = new Image();
+            newImg.src = data.image_url + '?_=' + new Date().getTime();
+            newImg.onload = function() {
+                const currentImage = document.getElementById('current-image');
+                currentImage.src = newImg.src;
+                const filenameOverlay = document.getElementById('filename-overlay');
+                if (filenameOverlay) {
+                    filenameOverlay.textContent = data.file_name;
+                }
+            }
+            newImg.onerror = function(err) {
+                // Handle error if needed.
+            }
+        })
+        .catch(err => {
+            // Handle error if needed.
+        });
 }
 
 // ========================
 // Keyboard Navigation
 // ========================
 document.addEventListener('keydown', function(e) {
-    // If focus is on an input/textarea, skip navigation
     const activeTag = document.activeElement.tagName.toLowerCase();
     if (activeTag === 'input' || activeTag === 'textarea') {
         return;
@@ -131,17 +170,14 @@ currentImage.addEventListener('click', function() {
 });
 
 // ========================
-// Ctrl+Scroll => Zoom, else => Next/Prev
-// ONLY in Left Panel
+// Ctrl+Scroll => Zoom, else => Next/Prev (Left Panel)
 // ========================
 let zoomScale = 1.0;
 const leftPanel = document.getElementById('left-panel');
 
 leftPanel.addEventListener('wheel', function(e) {
-    // If user is pressing Ctrl, do custom zoom
-    // If user is not pressing Ctrl, go next/prev
     if (!e.ctrlKey) {
-        e.preventDefault(); // prevent browser's normal scroll
+        e.preventDefault();
         if (e.deltaY < 0) {
             goPrev();
         } else {
@@ -150,20 +186,14 @@ leftPanel.addEventListener('wheel', function(e) {
         return;
     }
 
-    // Ctrl + scroll => Zoom around cursor
     e.preventDefault();
-
-    // We'll still zoom the image itself
     const rect = currentImage.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
     const offsetY = e.clientY - rect.top;
-
-    // Convert to percentage for transform-origin
     const originX = (offsetX / rect.width) * 100;
     const originY = (offsetY / rect.height) * 100;
     currentImage.style.transformOrigin = `${originX}% ${originY}%`;
 
-    // Zoom in/out
     if (e.deltaY < 0) {
         zoomScale += 0.1;
     } else {
@@ -180,38 +210,26 @@ const filenameOverlay = document.getElementById('filename-overlay');
 if (filenameOverlay) {
     filenameOverlay.addEventListener('click', function() {
         const oldName = filenameOverlay.textContent.trim();
-
-        // Derive base name (no extension)
         const dotIndex = oldName.lastIndexOf('.');
         let baseName = oldName;
         if (dotIndex > 0) {
             baseName = oldName.substring(0, dotIndex);
         }
-
-        // Create input in place
         const input = document.createElement('input');
         input.type = 'text';
         input.value = baseName;
         input.classList.add('rename-input');
-
-        // Replace text with input
         filenameOverlay.textContent = '';
         filenameOverlay.appendChild(input);
-
-        // Focus (no auto-select, so user can place cursor)
         input.focus();
-
-        // ENTER => rename
         input.addEventListener('keydown', function(ev) {
             if (ev.key === 'Enter') {
                 ev.preventDefault();
                 const newBase = input.value.trim();
                 if (!newBase) {
-                    // If empty, revert
                     filenameOverlay.textContent = oldName;
                     return;
                 }
-                // POST JSON to /rename_image
                 fetch("{{ url_for('rename_image') }}", {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -226,7 +244,6 @@ if (filenameOverlay) {
                             throw new Error(text);
                         });
                     }
-                    // On success, reload
                     window.location.reload();
                 })
                 .catch(err => {
@@ -235,8 +252,6 @@ if (filenameOverlay) {
                 });
             }
         });
-
-        // BLUR => revert if user clicks away
         input.addEventListener('blur', function() {
             filenameOverlay.textContent = oldName;
         });
@@ -245,34 +260,21 @@ if (filenameOverlay) {
 
 // ========================
 // Change Folder on Click
-// (Primarily to edit the current path)
 // ========================
 const folderDisplay = document.getElementById('folder-display');
 if (folderDisplay) {
     folderDisplay.addEventListener('click', function (e) {
-    // If there's already an input showing, do nothing
-    if (folderDisplay.querySelector('input')) {
-        return;  // We already replaced the text with an input
-    }
-    
-    // Otherwise proceed as before...
-    const oldFolder = folderDisplay.textContent.trim();
-
-        // Create input with the old path (so user can edit in place)
+        if (folderDisplay.querySelector('input')) {
+            return;
+        }
+        const oldFolder = folderDisplay.textContent.trim();
         const input = document.createElement('input');
         input.type = 'text';
         input.value = oldFolder;
         input.classList.add('rename-input');
-        console.log("oldFolder:", JSON.stringify(oldFolder));
-
-        // Replace the text with the input
         folderDisplay.textContent = '';
         folderDisplay.appendChild(input);
-
-        // Focus only (no select, so the user can easily edit)
         input.focus();
-
-        // Press ENTER => change folder
         input.addEventListener('keydown', function(ev) {
             if (ev.key === 'Enter') {
                 ev.preventDefault();
@@ -281,8 +283,6 @@ if (folderDisplay) {
                     folderDisplay.textContent = oldFolder;
                     return;
                 }
-
-                // POST JSON to /change_folder
                 fetch("{{ url_for('change_folder') }}", {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -297,7 +297,6 @@ if (folderDisplay) {
                     return res.json();
                 })
                 .then(() => {
-                    // On success, reload to show new folder
                     window.location.reload();
                 })
                 .catch(err => {
@@ -306,11 +305,8 @@ if (folderDisplay) {
                 });
             }
         });
-
-        // If user clicks away => revert visually
         input.addEventListener('blur', function() {
             folderDisplay.textContent = oldFolder;
-            console.log("oldFolder:", JSON.stringify(oldFolder));
         });
     });
 }

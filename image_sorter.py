@@ -4,7 +4,7 @@ import time
 import shutil
 import uuid
 import json
-from flask import Flask, request, render_template, redirect, url_for, session, send_file
+from flask import Flask, request, render_template, redirect, url_for, session, send_file, jsonify
 
 ##############################################################################
 # Config
@@ -150,6 +150,29 @@ def navigate(direction):
 
     data['current_index'] = idx
     return redirect(url_for('index'))
+
+@app.route('/ajax_navigate/<direction>')
+def ajax_navigate(direction):
+    """AJAX endpoint to navigate images without a full page reload."""
+    data = get_data_for_session(create_if_missing=False)
+    if not data or not data['image_list']:
+        return jsonify(error="No images available"), 404
+
+    idx = data['current_index']
+    total = len(data['image_list'])
+    if direction == 'next':
+        idx = (idx + 1) if idx < (total - 1) else 0
+    elif direction == 'prev':
+        idx = (idx - 1) if idx > 0 else (total - 1)
+    else:
+        return jsonify(error="Invalid direction"), 400
+
+    data['current_index'] = idx
+    file_name = data['image_list'][idx]
+    image_url = url_for('show_current_image')
+    # Log in Flask (visible in server console)
+    app.logger.info(f"AJAX navigate {direction}: index {idx}, file {file_name}")
+    return jsonify(image_url=image_url, file_name=file_name)
 
 @app.route('/show_current_image')
 def show_current_image():
@@ -304,5 +327,4 @@ def rename_image():
 
 
 if __name__ == '__main__':
-    # If you ever want to run it directly (no tray icon):
     app.run(debug=True)

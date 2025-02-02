@@ -152,3 +152,8 @@
   .folder-display:hover {
     cursor:pointer;
   }
+
+  .current-image {
+    transition: opacity 0.2s ease-in-out;
+    opacity: 1;
+}
